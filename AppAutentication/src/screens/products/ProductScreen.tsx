@@ -19,7 +19,7 @@ const ProductScreen = ({ route, navigation }: Props) => {
     const [tempUri, setTempUri] = useState<string>("");
     const [isLoadingImg, setIsLoadingImg] = useState<boolean>(false);
     const { id, name, _img = '', categorifromProd } = route.params;
-    const { loadProductById, updateProduct, addProducts } = useContext(ProductsContext);
+    const { loadProductById, updateProduct, addProducts, uploadImage } = useContext(ProductsContext);
     const [producto, setProducto] = useState<Producto[]>([]);
     const { categories } = useCategories();
     const [showCategory, setShowCategory] = useState('')
@@ -83,7 +83,7 @@ const ProductScreen = ({ route, navigation }: Props) => {
         setIsLoadingImg(true);
         const response = await launchCamera({
             mediaType: 'photo',
-            maxWidth: 0.5,
+            quality: 0.5,
         });
         if (response.didCancel) {
             setIsLoadingImg(false);
@@ -93,8 +93,49 @@ const ProductScreen = ({ route, navigation }: Props) => {
             setIsLoadingImg(false);
             return;
         }
+
         setTempUri(response!.assets![0]!.uri);
+
         setIsLoadingImg(false);
+        try {
+            await uploadImage(response, _id);
+
+        } catch (error) {
+            console.log(error)
+
+        } finally {
+            setIsLoadingImg(false);
+        }
+
+    }
+
+    const takeFromGarelly = async () => {
+
+        const response = await launchImageLibrary({
+            mediaType: 'photo',
+            quality: 0.5,
+        });
+        setIsLoadingImg(true);
+        if (response.didCancel) {
+            setIsLoadingImg(false);
+            return;
+        }
+        if (!(response!.assets![0].uri)) {
+            setIsLoadingImg(false);
+            return;
+        }
+        setTempUri(response!.assets![0]!.uri);
+
+        try {
+            await uploadImage(response, _id);
+
+        } catch (error) {
+            console.log(error)
+
+        } finally {
+            setIsLoadingImg(false);
+        }
+
     }
 
 
@@ -166,8 +207,11 @@ const ProductScreen = ({ route, navigation }: Props) => {
                         >
                             <Text style={{ ...styles.textButton, }}>Camara</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={{ ...styles.button, width: '40%' }}
+                        <TouchableOpacity
+                            onPress={takeFromGarelly}
+                            style={{ ...styles.button, width: '40%' }}
                             activeOpacity={0.8}
+
                         >
                             <Text style={{ ...styles.textButton }}>Galeria</Text>
                         </TouchableOpacity>
@@ -186,8 +230,7 @@ const ProductScreen = ({ route, navigation }: Props) => {
                     />}
 
                 {tempUri &&
-                    <>
-                        {isLoadingImg && <LoginScreen />}
+                    <><View>
                         <Image source={{ uri: tempUri }}
                             style={{
                                 marginTop: 20,
@@ -195,6 +238,20 @@ const ProductScreen = ({ route, navigation }: Props) => {
                                 height: 300
                             }}
                         />
+                        <View style={{
+                            backgroundColor: 'rgba(229,229,229,0.4)',
+                            position: 'absolute',
+                            top: '50%',
+                            left: '45%',
+                            borderRadius: 100,
+
+                        }}>
+
+                            {isLoadingImg && <LoginScreen />}
+                        </View>
+                    </View>
+
+
                     </>
                 }
 

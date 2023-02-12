@@ -4,6 +4,7 @@ import cafeApi from '../apis/cafeApi';
 
 import { useCategories } from "../hooks/useCategories";
 import { useNavigation } from "@react-navigation/native";
+import { ImagePickerResponse } from "react-native-image-picker";
 
 
 
@@ -16,7 +17,7 @@ type ProductsContextProps = {
     updateProduct: (productName: string, categoryId: string, idProducto: string) => Promise<Producto>,
     deleteProduct: (productId: string) => Promise<Producto>,
     loadProductById: (idProduct: string) => Promise<Producto>,
-    uploadImage: (data: any, id: string) => Promise<void>,
+    uploadImage: (data: any, id: string) => Promise<Producto>,
 }
 
 
@@ -84,13 +85,29 @@ export const ProductosProvider = ({ children }: any) => {
 
     };
     const loadProductById = async (idProduct: string): Promise<Producto> => {
-
         const resp = await cafeApi.get<Producto>(`/productos/${idProduct}`);
         return resp.data;
+    };
+    
+    const uploadImage = async (data: ImagePickerResponse, id: string) => {
+        console.log(id);
+        const { uri, type, fileName } = data!.assets![0];
+        const fileToUploade = {
+            uri: uri,
+            type: type,
+            name: fileName,
+        }
 
+        const formData = new FormData();
+         formData.append('archivo', fileToUploade);
+        console.log(formData)
+
+        
+        const resp = await cafeApi.put('/uploads/productos/' + id, formData);
+        console.log(resp);
+        return resp.data;
 
     };
-    const uploadImage = async (data: any, id: string) => { };
 
 
     return (
